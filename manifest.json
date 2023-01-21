@@ -24,8 +24,8 @@
   ],
   "start_url": "./",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff",
+  "theme_color": "#27822f",
+  "background_color": "#e1e1e1",
   "shortcuts": [
     {
       "name": "Open left gate",
