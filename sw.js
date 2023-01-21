@@ -1,7 +1,7 @@
 // https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Offline_Service_workers
 const cacheName = 'lolidk';
 const appShellFiles = [
-  '/',
+  './',
   'style.css',
   'manifest.json',
   'fonts/roboto.css',
