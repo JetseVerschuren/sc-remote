@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="stylesheet" href="style.css" />
+<link rel="manifest" href="manifest.json"/>
+<meta name="theme-color" content="#2e7d32"/>
+
+<script>
+
+const baseUrl = "https://backbone-web-api.production.twente.delcom.nl/";
+
+function showLogin() {
+  const token = localStorage.getItem("idToken");
+  if(token) {
+    const username = JSON.parse(atob(token.split('.')[1])).email;
+    document.getElementById("username").value = username;
+  }
+  document.getElementById("login-dialog").style.visibility = "visible";
+}
+
+function createNotification(message, success) {
+  const text = document.createTextNode(message);
+  const content = document.createElement("div");
+  content.classList.add("paper-content");
+  content.appendChild(text);
+  const notification = document.createElement("div");
+  notification.classList.add("paper-root");
+  notification.classList.add(`notification-${success ? "success" : "fail"}`);
+  notification.appendChild(content);
+  document.getElementById("notifications").appendChild(notification);
+
+  setTimeout(() => notification.remove(), 5000);
+}
+
+function hideLogin() {
+  document.getElementById("login-dialog").style.visibility = "hidden";
+}
+
+function getToken() {
+  const token = localStorage.getItem("idToken");
+  const tokenIsValid = !!token && JSON.parse(atob(token.split('.')[1])).exp > (Date.now() / 1000);
+  if(!tokenIsValid) {
+    // TODO: Try refresh token
+    showLogin();
+    throw new Error("No valid credentials found!");
+  }
+  return token;
+}
+
+async function postRequest(url, body, auth = true) {
+  const headers = {"Content-Type": "application/json"};
+  if(auth) headers["Authorization"] = `Bearer ${getToken()}`;
+  return (await fetch(baseUrl + url, {
+    headers,
+    body: JSON.stringify(body),
+    method: "POST",
+    credentials: "omit",
+  })).json();
+}
+
+async function login(email, password) {
+  const response = await postRequest("auth", {
+    email,
+    password,
+  }, false);
+
+  document.getElementById("password").value = "";
+  if(response.statusCode) {
+    if(response.message === "Unauthorized") throw new Error("Wrong username and/or password");
+    else throw new Error(response.message);
+  }
+
+  const {access_token: accessToken, id_token: idToken, refresh_token: refreshToken} = response;
+  localStorage.setItem("accessToken", accessToken);
+  localStorage.setItem("idToken", idToken);
+  localStorage.setItem("refreshToken", refreshToken);
+
+  hideLogin();
+  return "Login sucessful!";
+}
+
+async function openGate(gateCode) {
+  const response = await postRequest("tasks", {
+    type: "AccessControlRequestEntryByCode",
+    isAsync: false,
+    params: {
+      gateCode
+    },
+  });
+
+  if(response.statusCode) throw new Error(response.message);
+
+  return "Opened gate!";
+}
+
+async function wrapNotification(fn, ...args) {
+  try {
+    const message = await fn(...args);
+    createNotification(message, true);
+    console.log(message);
+  } catch(e) {
+    createNotification(e.message ?? "Unknown error", false);
+    console.error(e);
+  }
+}
+
+addEventListener("load", () => {
+  document.querySelector("form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+    await wrapNotification(login, username, password);
+  });
+
+  // Make sure we have a valid token on start of the application
+  try {
+    getToken();
+  } catch(e) {
+    console.error(e);
+  }
+});
+
+// Register service worker, necessary for PWA
+const isLocalhost = location.hostname === "localhost" || location.hostname === "127.0.0.1" || location.protocol === "file:";
+if(!isLocalhost && 'serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+
+</script>
+</head>
+<body>
+
+<div class="paper-root">
+  <h2 class="paper-title">Left gate</h2>
+  <div class="paper-content">
+    <button onclick="wrapNotification(openGate, 1)">Open left gate</button>
+  </div>
+  <div class="paper-actions"></div>
+</div>
+<div class="paper-root">
+  <h2 class="paper-title">Right gate</h2>
+  <div class="paper-content">
+    <button onclick="wrapNotification(openGate, 2)">Open right gate</button>
+  </div>
+  <div class="paper-actions"></div>
+</div>
+
+<div class="dialog-root" id="login-dialog" style="visibility: hidden">
+  <div class="backdrop"></div>
+  <form class="paper-root">
+    <h2 class="paper-title">Login</h2>
+    <div class="paper-content">
+      <input type="text" placeholder="Username" id="username" />
+      <input type="password" placeholder="Password" id="password" />
+    </div>
+    <div class="paper-actions">
+      <button type="submit">LOGIN</button>
+    </div>
+  </form>
+</div>
+
+<div class="notifications" id="notifications"></div>
+
+</body>
+</html>

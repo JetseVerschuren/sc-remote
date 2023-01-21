@@ -1,0 +1,42 @@
+{
+  "short_name": "Gate opener",
+  "name": "Delcom remote gate opener",
+  "description": "",
+  "icons": [
+    {
+      "src": "icons/logo.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/logo192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/logo512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "landscape",
+  "theme_color": "#000000",
+  "background_color": "#ffffff",
+  "shortcuts": [
+    {
+      "name": "Open left gate",
+      "short_name": "Left",
+      "url": "/?gate=left"
+    },
+    {
+      "name": "Open right gate",
+      "short_name": "Right",
+      "url": "/?gate=right"
+    }
+  ]
+}
