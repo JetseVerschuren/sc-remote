@@ -22,21 +22,20 @@
       "purpose": "any maskable"
     }
   ],
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
-  "orientation": "landscape",
   "theme_color": "#000000",
   "background_color": "#ffffff",
   "shortcuts": [
     {
       "name": "Open left gate",
       "short_name": "Left",
-      "url": "/?gate=left"
+      "url": "./?gate=left"
     },
     {
       "name": "Open right gate",
       "short_name": "Right",
-      "url": "/?gate=right"
+      "url": "./?gate=right"
     }
   ]
 }
