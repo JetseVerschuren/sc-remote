@@ -30,12 +30,12 @@
     {
       "name": "Open left gate",
       "short_name": "Left",
-      "url": "./?gate=left"
+      "url": "./#left"
     },
     {
       "name": "Open right gate",
       "short_name": "Right",
-      "url": "./?gate=right"
+      "url": "./#right"
     }
   ]
 }
