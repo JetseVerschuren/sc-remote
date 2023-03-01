@@ -39,11 +39,27 @@ function hideLogin() {
   document.getElementById("login-dialog").style.visibility = "hidden";
 }
 
-function getToken() {
+function storeTokens({access_token: accessToken, id_token: idToken, refresh_token: refreshToken}) {
+  localStorage.setItem("accessToken", accessToken);
+  localStorage.setItem("idToken", idToken);
+  localStorage.setItem("refreshToken", refreshToken);
+}
+
+async function refreshJWT() {
+  const refreshToken = localStorage.getItem("refreshToken");
+  if(refreshToken === null) return null;
+  const response = await postRequest("/auth/token-refresh", {refresh_token: refreshToken}, false);
+  if(response.statusCode) return null;
+  storeTokens(response);
+  return response.id_token;
+}
+
+async function getToken() {
   const token = localStorage.getItem("idToken");
   const tokenIsValid = !!token && JSON.parse(atob(token.split('.')[1])).exp > (Date.now() / 1000);
   if(!tokenIsValid) {
-    // TODO: Try refresh token
+    const newToken = await refreshJWT();
+    if(newToken !== null) return newToken;
     showLogin();
     throw new Error("No valid credentials found!");
   }
@@ -52,11 +68,20 @@ function getToken() {
 
 async function postRequest(url, body, auth = true) {
   const headers = {"Content-Type": "application/json"};
-  if(auth) headers["Authorization"] = `Bearer ${getToken()}`;
+  if(auth) headers["Authorization"] = `Bearer ${await getToken()}`;
   return (await fetch(baseUrl + url, {
     headers,
     body: JSON.stringify(body),
     method: "POST",
+    credentials: "omit",
+  })).json();
+}
+
+async function getRequest(url) {
+  const headers = {"Authorization": `Bearer ${await getToken()}`};
+  return (await fetch(baseUrl + url, {
+    headers,
+    method: "GET",
     credentials: "omit",
   })).json();
 }
@@ -73,10 +98,7 @@ async function login(email, password) {
     else throw new Error(response.message);
   }
 
-  const {access_token: accessToken, id_token: idToken, refresh_token: refreshToken} = response;
-  localStorage.setItem("accessToken", accessToken);
-  localStorage.setItem("idToken", idToken);
-  localStorage.setItem("refreshToken", refreshToken);
+  storeTokens(response);
 
   hideLogin();
   return "Login sucessful!";
@@ -107,7 +129,7 @@ async function wrapNotification(fn, ...args) {
   }
 }
 
-addEventListener("load", () => {
+addEventListener("load", async () => {
   document.querySelector("form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const username = document.getElementById("username").value;
