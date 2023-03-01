@@ -2,6 +2,8 @@
 const cacheName = 'lolidk';
 const appShellFiles = [
   './',
+  'js/utils.js',
+  'js/idb-keyval.js',
   'style.css',
   'manifest.json',
   'fonts/roboto.css',
