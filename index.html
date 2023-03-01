@@ -139,9 +139,9 @@ addEventListener("load", async () => {
 
   // Make sure we have a valid token on start of the application
   try {
-    getToken();
+    await getToken();
   } catch(e) {
-    console.error(e);
+    console.log(e);
   }
 });
 
