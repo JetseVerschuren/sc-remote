@@ -104,6 +104,7 @@ addEventListener("load", async () => {
     const username = document.getElementById("username").value;
     const password = document.getElementById("password").value;
     if(await wrapNotification(login, username, password)) hideLogin();
+    document.getElementById("password").value = "";
   });
 
   for(const gate of gates) {

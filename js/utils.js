@@ -1,4 +1,4 @@
-import { get, setMany } from './idb-keyval.js';
+import { get, getMany, setMany } from './idb-keyval.js';
 
 const baseUrl = "https://backbone-web-api.production.twente.delcom.nl/";
 
@@ -10,6 +10,13 @@ async function storeTokens({access_token: accessToken, id_token: idToken, refres
   ]);
 }
 
+async function storeCredentials(username, password) {
+  await setMany([
+    ["username", username],
+    ["password", password],
+  ]);
+}
+
 async function getIdToken() {
   return await get("idToken");
 }
@@ -18,10 +25,12 @@ async function getRefreshToken() {
   return await get("refreshToken");
 }
 
+async function getCredentials() {
+  return await getMany(["username", "password"]);
+}
+
 export async function getUsername() {
-  const token = await getIdToken();
-  if(!token) return null;
-  else return JSON.parse(atob(token.split('.')[1])).email;
+  return await get("username");
 }
 
 async function refreshJWT() {
@@ -33,12 +42,28 @@ async function refreshJWT() {
   return response.id_token;
 }
 
+async function refreshUsingPassword() {
+  const [username, password] = await getCredentials();
+
+  if(!username || !password) return null;
+
+  try {
+    await login(username, password);
+    return await getIdToken();
+  } catch(e) {
+    console.log(e);
+    return null;
+  }
+}
+
 async function getToken() {
   const token = await getIdToken();
   const tokenIsValid = !!token && JSON.parse(atob(token.split('.')[1])).exp > (Date.now() / 1000);
   if(!tokenIsValid) {
-    const newToken = await refreshJWT();
-    if(newToken !== null) return newToken;
+    const refreshedToken = await refreshJWT();
+    if(refreshedToken !== null) return refreshedToken;
+    const passwordToken = await refreshUsingPassword();
+    if(passwordToken !== null) return passwordToken;
     throw new Error("No valid credentials found!");
   }
   return token;
@@ -80,13 +105,13 @@ export async function login(email, password) {
     password,
   }, false);
 
-  document.getElementById("password").value = "";
   if(response.statusCode) {
     if(response.message === "Unauthorized") throw new Error("Wrong username and/or password");
     else throw new Error(response.message);
   }
 
   await storeTokens(response);
+  await storeCredentials(email, password);
 
   return "Login sucessful!";
 }
