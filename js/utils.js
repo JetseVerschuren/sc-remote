@@ -1,28 +1,40 @@
+import { get, setMany } from './idb-keyval.js';
+
 const baseUrl = "https://backbone-web-api.production.twente.delcom.nl/";
 
-function storeTokens({access_token: accessToken, id_token: idToken, refresh_token: refreshToken}) {
-  localStorage.setItem("accessToken", accessToken);
-  localStorage.setItem("idToken", idToken);
-  localStorage.setItem("refreshToken", refreshToken);
+async function storeTokens({access_token: accessToken, id_token: idToken, refresh_token: refreshToken}) {
+  await setMany([
+    ["accessToken", accessToken],
+    ["idToken", idToken],
+    ["refreshToken", refreshToken],
+  ]);
 }
 
-export function getUsername() {
-  const token = localStorage.getItem("idToken");
+async function getIdToken() {
+  return await get("idToken");
+}
+
+async function getRefreshToken() {
+  return await get("refreshToken");
+}
+
+export async function getUsername() {
+  const token = await getIdToken();
   if(!token) return null;
   else return JSON.parse(atob(token.split('.')[1])).email;
 }
 
 async function refreshJWT() {
-  const refreshToken = localStorage.getItem("refreshToken");
-  if(refreshToken === null) return null;
+  const refreshToken = await getRefreshToken();
+  if(!refreshToken) return null;
   const response = await postRequest("/auth/token-refresh", {refresh_token: refreshToken}, false);
   if(response.statusCode) return null;
-  storeTokens(response);
+  await storeTokens(response);
   return response.id_token;
 }
 
 async function getToken() {
-  const token = localStorage.getItem("idToken");
+  const token = await getIdToken();
   const tokenIsValid = !!token && JSON.parse(atob(token.split('.')[1])).exp > (Date.now() / 1000);
   if(!tokenIsValid) {
     const newToken = await refreshJWT();
@@ -74,7 +86,7 @@ export async function login(email, password) {
     else throw new Error(response.message);
   }
 
-  storeTokens(response);
+  await storeTokens(response);
 
   return "Login sucessful!";
 }

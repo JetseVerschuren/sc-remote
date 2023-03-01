@@ -17,8 +17,8 @@ import { getUsername, postRequest, getRequest, login, hasValidToken } from './js
 window.postRequest = postRequest;
 window.getRequest = getRequest;
 
-function showLogin() {
-  const username = getUsername();
+async function showLogin() {
+  const username = await getUsername();
   if(username) document.getElementById("username").value = username;
   document.getElementById("login-dialog").style.visibility = "visible";
 }
@@ -111,7 +111,7 @@ addEventListener("load", async () => {
   }
 
   // Make sure we have a valid token on start of the application
-  if(!await hasValidToken()) showLogin();
+  if(!await hasValidToken()) await showLogin();
 });
 
 // Register service worker, necessary for PWA
