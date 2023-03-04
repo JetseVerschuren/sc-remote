@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -8,6 +8,9 @@
 <meta name="theme-color" content="#2e7d32"/>
 <link rel="apple-touch-icon" href="icons/logo192.png">
 <link rel="icon" href="icons/logo192.png">
+
+<title>SC Gate Opener</title>
+<meta name="description">A PWA implementing the S&C APIs to more efficiently open the gates</meta>
 
 <script type="module">
 
@@ -132,7 +135,7 @@ addEventListener("load", async () => {
 
 // Register service worker, necessary for PWA
 const isLocalhost = location.hostname === "localhost" || location.hostname === "127.0.0.1" || location.protocol === "file:";
-if(!isLocalhost && 'serviceWorker' in navigator) navigator.serviceWorker.register('./js/sw.js');
+if(!isLocalhost && 'serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
 
 </script>
 </head>
